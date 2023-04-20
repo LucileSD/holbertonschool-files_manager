@@ -27,7 +27,7 @@ router.get('/users/me', (request, response) => {
   UsersController.getMe(request, response)
 });
 
-router.post('/files', (req, res) => {
+router.post('/files', bodyParser.json(), (req, res) => {
   FilesController.postUpload(req, res);
 })
 
