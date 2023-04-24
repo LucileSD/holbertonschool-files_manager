@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
 import getUserByToken from '../utils/authUser';
 
@@ -45,6 +46,9 @@ class FilesController {
       });
 
       findFile = await dbClient.db.collection('files').findOne({ name });
+      if (!findFile) {
+        response.status(404).send({ error: 'Not found' });
+      }
       return response.status(201).send({
         id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
       });
@@ -63,6 +67,9 @@ class FilesController {
       userId, name, type, parentId, isPublic, data,
     });
     findFile = await dbClient.db.collection('files').findOne({ name });
+    if (!findFile) {
+      response.status(404).send({ error: 'Not found' });
+    }
     return response.status(201).send({
       id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
     });
@@ -72,11 +79,11 @@ class FilesController {
     const user = await getUserByToken(request, response);
     const userId = user._id;
     const { id } = request.params;
-    const findFile = await dbClient.db.collection('files').findOne({ _id: id, userId });
+    const findFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id), userId });
     if (!findFile) {
       response.status(404).send({ error: 'Not found' });
     }
-    return findFile;
+    return response.status(200).send(findFile);
   }
 
   static async getIndex(request, response) {
