@@ -37,18 +37,17 @@ class FilesController {
     }
 
     const userId = user._id;
-    await dbClient.db.collection('files').insertOne({ userId });
     let newFile = {};
     let findFile = {};
     if (type === 'folder') {
       newFile = await dbClient.db.collection('files').insertOne({
-        name, type, parentId, isPublic, data,
+        userId, name, type, parentId, isPublic, data,
       });
-      newFile.insertedId;
-      const newValues = { $set: { userId } };
-      await dbClient.db.collection('files').updateOne(findFile, newValues);
+
       findFile = await dbClient.db.collection('files').findOne({ name });
-      return response.status(201).send(findFile);
+      return response.status(201).send({
+        id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
+      });
     }
     const path = process.env.FOLDER_PATH || '/tmp/files_manager';
     const folderName = `${path}/${uuidv4()}`;
@@ -60,11 +59,13 @@ class FilesController {
     fs.writeFile(folderName, content, (err) => {
       if (err) console.log(err);
     });
-    await dbClient.db.collection('files').insertOne({
-      name, type, parentId, isPublic, data,
+    newFile = await dbClient.db.collection('files').insertOne({
+      userId, name, type, parentId, isPublic, data,
     });
     findFile = await dbClient.db.collection('files').findOne({ name });
-    return response.status(200).send(findFile);
+    return response.status(201).send({
+      id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
+    });
   }
 
   static async getShow(request, response) {
