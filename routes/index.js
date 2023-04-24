@@ -24,7 +24,7 @@ router.get('/disconnect', (request, response) => {
 });
 
 router.get('/users/me', (request, response) => {
-  UsersController.getMe(request, response)
+  UsersController.getMe(request, response);
 });
 
 router.post('/files', bodyParser.json(), (req, res) => {
