@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
+import mime from 'mime-types';
 import dbClient from '../utils/db';
 import getUserByToken from '../utils/authUser';
 
@@ -143,6 +144,29 @@ class FilesController {
     await dbClient.db.collection('files').updateOne(query, newPublic);
     const newFindFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
     return response.status(200).send(newFindFile);
+  }
+
+  static async getFile(request, response) {
+    const { id } = request.params;
+    const file = dbClient.db.collection('files').findOne({ id });
+    if (!file) {
+      response.status(404).send({ error: 'Not found' });
+    }
+    if (file.isPublic === 'false') {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    if (file.type === 'folder') {
+      return response.status(400).send({ error: 'A folder doesn\'t have content' });
+    }
+    const path = process.env.FOLDER_PATH || '/tmp/files_manager';
+    if (!fs.existsSync(path)) {
+      return response.status(404).send({ error: 'Not Found' });
+    }
+    const fileName = `${path}/${file.name}`;
+    const typeMime = mime.lookup(file.name);
+    response.setHeader('Content-Type', typeMime);
+    const content = fs.readFileSync(fileName);
+    return response.status(200).send(content);
   }
 }
 
