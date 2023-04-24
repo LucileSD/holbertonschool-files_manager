@@ -117,18 +117,32 @@ class FilesController {
     return response.status(200).send(files);
   }
 
-  static async getFile(request, response) {
+  static async putPublish(request, response) {
     const { id } = request.params;
-    const file = dbClient.db.collection('files').findOne({ id });
-    if (!file) {
+    const user = getUserByToken(request, response);
+    const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
+    if (!findFile) {
       response.status(404).send({ error: 'Not found' });
     }
-    if (file.isPublic === 'false') {
-      return response.status(404).send({ error: 'Not found' });
+    const newPublic = { $set: { isPublic: true } };
+    const query = { userId: user._id, _id: ObjectId(id) };
+    await dbClient.db.collection('files').updateOne(query, newPublic);
+    const newFindFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
+    return response.status(200).send(newFindFile);
+  }
+
+  static async putUnpublish(request, response) {
+    const { id } = request.params;
+    const user = getUserByToken(request, response);
+    const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
+    if (!findFile) {
+      response.status(404).send({ error: 'Not found' });
     }
-    if (file.type === 'folder') {
-      return response.status(400).send({ error: 'A folder doesn\'t have content' });
-    }
+    const newPublic = { $set: { isPublic: false } };
+    const query = { userId: user._id, _id: ObjectId(id) };
+    await dbClient.db.collection('files').updateOne(query, newPublic);
+    const newFindFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
+    return response.status(200).send(newFindFile);
   }
 }
 

@@ -39,6 +39,14 @@ router.get('/files', (request, response) => {
   FilesController.getIndex(request, response);
 });
 
+router.put('/files/:id/publish', (request, response) => {
+  FilesController.putPublish(request, response);
+});
+
+router.put('/files/:id/unpublish', (request, response) => {
+  FilesController.putUnpublish(request, response);
+});
+
 router.get('/files/:id/data', (request, response) => {
   FilesController.getFile(request, response);
 });
