@@ -70,7 +70,7 @@ class FilesController {
 
   static async getShow(request, response) {
     const user = await getUserByToken(request, response);
-    const userId = user._id
+    const userId = user._id;
     const { id } = request.params;
     const findFile = await dbClient.db.collection('files').findOne({ _id: id, userId });
     if (!findFile) {
@@ -81,10 +81,10 @@ class FilesController {
 
   static async getIndex(request, response) {
     const user = await getUserByToken(request, response);
-    if(!user) {
+    if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    let parentId = request.query.parentId || 0;
+    const parentId = request.query.parentId || 0;
     const findFile = await dbClient.db.collection('files').findOne({ parentId });
     if (!findFile) {
       return response.status(200).send([]);
@@ -111,7 +111,7 @@ class FilesController {
   }
 
   static async getFile(request, response) {
-    const id = request.params.id;
+    const { id } = request.params;
     const file = dbClient.db.collection('files').findOne({ id });
     if (!file) {
       response.status(404).send({ error: 'Not found' });
@@ -119,7 +119,7 @@ class FilesController {
     if (file.isPublic === 'false') {
       return response.status(404).send({ error: 'Not found' });
     }
-    if(file.type === 'folder') {
+    if (file.type === 'folder') {
       return response.status(400).send({ error: 'A folder doesn\'t have content' });
     }
   }
