@@ -1,23 +1,11 @@
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { ObjectId } from 'mongodb';
 import dbClient from '../utils/db';
-import redisClient from '../utils/redis';
+import getUserByToken from '../utils/authUser';
 
 class FilesController {
   static async postUpload(request, response) {
-    const token = request.headers['x-token'];
-    const key = `auth_${token}`;
-    let userIId = await redisClient.get(key);
-    if (!userIId) {
-      return response.status(401).send({ error: 'Unauthorized' });
-    }
-    userIId = userIId.slice(1, -1);
-
-    const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userIId) });
-    if (!user) {
-      return response.status(401).send({ error: 'Unauthorized' });
-    }
+    const user = await getUserByToken(request, response);
 
     const { name } = request.body;
     const { type } = request.body;
@@ -77,6 +65,62 @@ class FilesController {
     });
     findFile = await dbClient.db.collection('files').findOne({ name });
     return response.status(200).send(findFile);
+  }
+
+  static async getShow(request, response) {
+    const user = await getUserByToken(request, response);
+    const userId = user._id
+    const { id } = request.params;
+    const findFile = await dbClient.db.collection('files').findOne({ _id: id, userId });
+    if (!findFile) {
+      response.status(404).send({ error: 'Not found' });
+    }
+    return findFile;
+  }
+
+  static async getIndex(request, response) {
+    const user = await getUserByToken(request, response);
+    if(!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
+    let parentId = request.query.parentId || 0;
+    const findFile = await dbClient.db.collection('files').findOne({ parentId });
+    if (!findFile) {
+      return response.status(200).send([]);
+    }
+    const page = request.query.page || 0;
+    const agg = { $and: [{ parentId }] };
+    let aggData = [{ $match: agg }, { $skip: page * 20 }, { $limit: 20 }];
+    if (parentId === 0) aggData = [{ $skip: page * 20 }, { $limit: 20 }];
+    console.log(aggData);
+    const pageFiles = await dbClient.db.collection('files').aggregate(aggData);
+    const files = [];
+    await pageFiles.forEach((file) => {
+      const fileObj = {
+        id: file._id,
+        userId: file.userId,
+        name: file.name,
+        type: file.type,
+        isPublic: file.isPublic,
+        parentId: file.parentId,
+      };
+      files.push(fileObj);
+    });
+    return response.status(200).send(files);
+  }
+
+  static async getFile(request, response) {
+    const id = request.params.id;
+    const file = dbClient.db.collection('files').findOne({ id });
+    if (!file) {
+      response.status(404).send({ error: 'Not found' });
+    }
+    if (file.isPublic === 'false') {
+      return response.status(404).send({ error: 'Not found' });
+    }
+    if(file.type === 'folder') {
+      return response.status(400).send({ error: 'A folder doesn\'t have content' });
+    }
   }
 }
 
