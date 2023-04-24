@@ -31,17 +31,17 @@ class UsersController {
     const token = request.headers['x-token'];
     const key = `auth_${token}`;
     let userId = await redisClient.get(key);
-
+    if (!userId) {
+      return response.status(401).send({ error: 'Unauthorized'});
+    }
     userId = userId.slice(1, -1);
 
     const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userId) });
 
     if(!user) {
-      response.status(401).send({ error: 'Unauthorized'});
-      return null;
+      return response.status(401).send({ error: 'Unauthorized'});
     }
-    response.send({ email: user.email, id: user._id });
-    return user;
+    return response.send({ email: user.email, id: user._id });
   }
 }
 
