@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
-import dbClient from '../utils/db';
-import redisClient from '../utils/redis';
+import dbClient from './db';
+import redisClient from './redis';
 
 export default async function getUserByToken(request, response) {
   const token = request.headers['x-token'];
