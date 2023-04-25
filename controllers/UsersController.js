@@ -41,7 +41,7 @@ class UsersController {
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    return response.status(200).send({ id: user._id, email: user.email });
+    return response.status(201).send({ id: user._id, email: user.email });
   }
 }
 
