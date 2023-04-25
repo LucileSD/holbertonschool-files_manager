@@ -12,8 +12,6 @@ export default async function getUserByToken(request, response) {
   userIId = userIId.slice(1, -1);
 
   const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userIId) });
-  if (!user) {
-    return response.status(401).send({ error: 'Unauthorized' });
-  }
+
   return user;
 }

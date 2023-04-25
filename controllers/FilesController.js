@@ -8,7 +8,9 @@ import getUserByToken from '../utils/authUser';
 class FilesController {
   static async postUpload(request, response) {
     const user = await getUserByToken(request, response);
-
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
     const { name } = request.body;
     const { type } = request.body;
     const parentId = request.body.parentId || 0;
@@ -71,6 +73,9 @@ class FilesController {
 
   static async getShow(request, response) {
     const user = await getUserByToken(request, response);
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
     const userId = user._id;
     const { id } = request.params;
     const findFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id), userId });
@@ -114,6 +119,9 @@ class FilesController {
   static async putPublish(request, response) {
     const { id } = request.params;
     const user = getUserByToken(request, response);
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
     const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
     if (!findFile) {
       response.status(404).send({ error: 'Not found' });
@@ -128,6 +136,9 @@ class FilesController {
   static async putUnpublish(request, response) {
     const { id } = request.params;
     const user = getUserByToken(request, response);
+    if (!user) {
+      return response.status(401).send({ error: 'Unauthorized' });
+    }
     const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
     if (!findFile) {
       response.status(404).send({ error: 'Not found' });
