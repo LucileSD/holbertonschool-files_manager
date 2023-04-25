@@ -29,7 +29,7 @@ class FilesController {
     }
 
     if (parentId === request.body.parentId) {
-      const file = await dbClient.db.collection('files').findOne({ name, parentId });
+      const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(parentId) });
       if (!file) {
         return response.status(400).send({ error: 'Parent not found' });
       }
@@ -40,18 +40,14 @@ class FilesController {
 
     const userId = user._id;
     let newFile = {};
-    let findFile = {};
+
     if (type === 'folder') {
       newFile = await dbClient.db.collection('files').insertOne({
-        userId, name, type, parentId, isPublic, data,
+        userId, name, type, isPublic, parentId: parentId === 0 ? parentId : ObjectId(parentId),
       });
 
-      findFile = await dbClient.db.collection('files').findOne({ name });
-      if (!findFile) {
-        response.status(404).send({ error: 'Not found' });
-      }
       return response.status(201).send({
-        id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
+        id: newFile.insertedId, userId, name, type, isPublic, parentId,
       });
     }
     const path = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -65,14 +61,11 @@ class FilesController {
       if (err) console.log(err);
     });
     newFile = await dbClient.db.collection('files').insertOne({
-      userId, name, type, parentId, isPublic, data,
+      userId, name, type, parentId, isPublic, data, localPath: folderName
     });
-    findFile = await dbClient.db.collection('files').findOne({ name });
-    if (!findFile) {
-      response.status(404).send({ error: 'Not found' });
-    }
+
     return response.status(201).send({
-      id: newFile.insertedId, userId, name, type, parentId, isPublic, data,
+      id: newFile.insertedId, userId, name, type, isPublic, parentId,
     });
   }
 
