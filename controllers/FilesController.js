@@ -63,7 +63,7 @@ class FilesController {
       if (err) console.log(err);
     });
     newFile = await dbClient.db.collection('files').insertOne({
-      userId, name, type, parentId, isPublic, data, localPath: folderName,
+      userId, name, type, parentId, isPublic, localPath: folderName,
     });
 
     return response.status(201).send({
