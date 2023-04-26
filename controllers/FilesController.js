@@ -98,10 +98,7 @@ class FilesController {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const parentId = request.query.parentId || 0;
-    const findFile = await dbClient.db.collection('files').findOne({ userId: user._id });
-    if (!findFile) {
-      return response.status(400).send([]);
-    }
+
     const page = request.query.page || 0;
     const agg = { $and: [{ parentId }] };
     let aggData = [{ $match: agg }, { $skip: page * 20 }, { $limit: 20 }];
@@ -125,41 +122,56 @@ class FilesController {
 
   static async putPublish(request, response) {
     const { id } = request.params;
-    const user = getUserByToken(request, response);
+    const user = await getUserByToken(request, response);
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
-    if (!findFile) {
-      response.status(404).send({ error: 'Not found' });
+
+    let newFindFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id), userId: user._id });
+    if (!newFindFile) {
+      return response.status(404).send({ error: 'Not found' });
     }
     const newPublic = { $set: { isPublic: true } };
-    const query = { userId: user._id, _id: ObjectId(id) };
+    const query = { _id: ObjectId(id) };
     await dbClient.db.collection('files').updateOne(query, newPublic);
-    const newFindFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
-    return response.status(200).send(newFindFile);
+    newFindFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id) });
+    return response.status(200).send({
+      id: newFindFile._id,
+      userId: newFindFile.userId,
+      name: newFindFile.name,
+      type: newFindFile.type,
+      isPublic: newFindFile.isPublic,
+      parentId: newFindFile.parentId,
+    });
   }
 
   static async putUnpublish(request, response) {
     const { id } = request.params;
-    const user = getUserByToken(request, response);
+    const user = await getUserByToken(request, response);
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const findFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
-    if (!findFile) {
-      response.status(404).send({ error: 'Not found' });
+    let newFindFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id), userId: user._id });
+    if (!newFindFile) {
+      return response.status(404).send({ error: 'Not found' });
     }
     const newPublic = { $set: { isPublic: false } };
-    const query = { userId: user._id, _id: ObjectId(id) };
+    const query = { _id: ObjectId(id) };
     await dbClient.db.collection('files').updateOne(query, newPublic);
-    const newFindFile = dbClient.db.collection('files').findOne({ userId: user._id, _id: ObjectId(id) });
-    return response.status(200).send(newFindFile);
+    newFindFile = await dbClient.db.collection('files').findOne({ _id: ObjectId(id) });
+    return response.status(200).send({
+      id: newFindFile._id,
+      userId: newFindFile.userId,
+      name: newFindFile.name,
+      type: newFindFile.type,
+      isPublic: newFindFile.isPublic,
+      parentId: newFindFile.parentId,
+    });
   }
 
   static async getFile(request, response) {
     const { id } = request.params;
-    const file = dbClient.db.collection('files').findOne({ id });
+    const file = await dbClient.db.collection('files').findOne({ id });
     if (!file) {
       response.status(404).send({ error: 'Not found' });
     }
