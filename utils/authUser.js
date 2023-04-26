@@ -7,7 +7,7 @@ export default async function getUserByToken(request, response) {
   const key = `auth_${token}`;
   let userIId = await redisClient.get(key);
   if (!userIId) {
-    return response.status(401).send({ error: 'Unauthorized' });
+    return undefined;
   }
 
   const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userIId) });
