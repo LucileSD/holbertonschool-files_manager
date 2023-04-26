@@ -171,12 +171,16 @@ class FilesController {
 
   static async getFile(request, response) {
     const { id } = request.params;
-    const file = await dbClient.db.collection('files').findOne({ id });
+    const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(id) });
     if (!file) {
       response.status(404).send({ error: 'Not found' });
     }
-    if (file.isPublic === 'false') {
-      return response.status(404).send({ error: 'Not found' });
+
+    if (file.isPublic === false) {
+      const user = await getUserByToken(request, response);
+      if (!user) {
+        return response.status(404).send({ error: 'Not found' });
+      }
     }
     if (file.type === 'folder') {
       return response.status(400).send({ error: 'A folder doesn\'t have content' });
@@ -185,10 +189,10 @@ class FilesController {
     if (!fs.existsSync(path)) {
       return response.status(404).send({ error: 'Not Found' });
     }
-    const fileName = `${path}/${file.name}`;
+
     const typeMime = mime.lookup(file.name);
     response.setHeader('Content-Type', typeMime);
-    const content = fs.readFileSync(fileName);
+    const content = fs.readFileSync(file.localPath);
     return response.status(200).send(content);
   }
 }
