@@ -6,7 +6,7 @@ import dbClient from '../utils/db';
 class AuthController {
   static async getConnect(request, response) {
     const base64 = request.headers.authorization.split(' ')[1];
-    if(!base64) {
+    if (!base64) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const credentials = Buffer.from(base64, 'base64').toString('utf-8');
