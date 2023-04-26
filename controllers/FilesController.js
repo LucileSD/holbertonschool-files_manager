@@ -58,7 +58,7 @@ class FilesController {
       fs.mkdirSync(path, { recurisve: true });
     }
 
-    const content = Buffer.from(data, 'base64').toString('ascii');
+    const content = Buffer.from(data, 'base64').toString('utf-8');
     fs.writeFile(folderName, content, (err) => {
       if (err) console.log(err);
     });
