@@ -100,7 +100,7 @@ class FilesController {
     const parentId = request.query.parentId || 0;
     const findFile = await dbClient.db.collection('files').findOne({ userId: user._id });
     if (!findFile) {
-      return response.status(200).send([]);
+      return response.status(400).send([]);
     }
     const page = request.query.page || 0;
     const agg = { $and: [{ parentId }] };
