@@ -1,5 +1,4 @@
 import express from 'express';
-import bodyParser from 'body-parser';
 import AppController from '../controllers/AppController';
 import UsersController from '../controllers/UsersController';
 import AuthController from '../controllers/AuthController';
@@ -15,7 +14,7 @@ router.get('/stats', (request, response) => {
   AppController.getStats(request, response);
 });
 
-router.post('/users', bodyParser.json(), (request, response) => {
+router.post('/users', (request, response) => {
   UsersController.postNew(request, response);
 });
 
@@ -31,7 +30,7 @@ router.get('/users/me', (request, response) => {
   UsersController.getMe(request, response);
 });
 
-router.post('/files', bodyParser.json(), (req, res) => {
+router.post('/files', (req, res) => {
   FilesController.postUpload(req, res);
 });
 
