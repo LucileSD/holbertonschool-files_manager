@@ -34,7 +34,6 @@ class UsersController {
     if (!userId) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    userId = userId.slice(1, -1);
 
     const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userId) });
 
