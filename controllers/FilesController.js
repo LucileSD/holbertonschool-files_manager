@@ -82,7 +82,14 @@ class FilesController {
     if (!findFile) {
       response.status(404).send({ error: 'Not found' });
     }
-    return response.status(200).send(findFile);
+    return response.status(200).send({
+      id: findFile._id,
+      userId,
+      name: findFile.name,
+      type: findFile.type,
+      isPublic: findFile.isPublic,
+      parentId: findFile.parentId,
+    });
   }
 
   static async getIndex(request, response) {
@@ -91,7 +98,7 @@ class FilesController {
       return response.status(401).send({ error: 'Unauthorized' });
     }
     const parentId = request.query.parentId || 0;
-    const findFile = await dbClient.db.collection('files').findOne({ parentId });
+    const findFile = await dbClient.db.collection('files').findOne({ userId: user._id });
     if (!findFile) {
       return response.status(200).send([]);
     }
@@ -99,7 +106,7 @@ class FilesController {
     const agg = { $and: [{ parentId }] };
     let aggData = [{ $match: agg }, { $skip: page * 20 }, { $limit: 20 }];
     if (parentId === 0) aggData = [{ $skip: page * 20 }, { $limit: 20 }];
-    console.log(aggData);
+
     const pageFiles = await dbClient.db.collection('files').aggregate(aggData);
     const files = [];
     await pageFiles.forEach((file) => {
