@@ -30,7 +30,7 @@ class FilesController {
       return response.status(400).send({ error: 'Missing type' });
     }
 
-    if (parentId === request.body.parentId) {
+    if (parentId) {
       const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(parentId) });
       if (!file) {
         return response.status(400).send({ error: 'Parent not found' });
@@ -63,7 +63,7 @@ class FilesController {
       if (err) console.log(err);
     });
     newFile = await dbClient.db.collection('files').insertOne({
-      userId, name, type, parentId, isPublic, data, localPath: folderName
+      userId, name, type, parentId, isPublic, data, localPath: folderName,
     });
 
     return response.status(201).send({
