@@ -97,12 +97,16 @@ class FilesController {
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
     }
-    const parentId = request.query.parentId || 0;
-
+    const parent = request.query.parentId || 0;
+    let match;
+    if (parent === 0) {
+      match = {};
+    } else {
+      match = { parentId: parent === '0' ? Number(parent) : ObjectId(parent) };
+    }
     const page = request.query.page || 0;
-    const agg = { $and: [{ parentId }] };
-    let aggData = [{ $match: agg }, { $skip: page * 20 }, { $limit: 20 }];
-    if (parentId === 0) aggData = [{ $skip: page * 20 }, { $limit: 20 }];
+
+    const aggData = [{ $match: match }, { $skip: page * 20 }, { $limit: 20 }];
 
     const pageFiles = await dbClient.db.collection('files').aggregate(aggData);
     const files = [];
