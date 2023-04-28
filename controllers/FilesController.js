@@ -2,11 +2,13 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { ObjectId } from 'mongodb';
 import mime from 'mime-types';
+import Queue from 'bull';
 import dbClient from '../utils/db';
 import getUserByToken from '../utils/authUser';
 
 class FilesController {
   static async postUpload(request, response) {
+    const fileQueue = new Queue('fileQueue');
     const user = await getUserByToken(request, response);
     if (!user) {
       return response.status(401).send({ error: 'Unauthorized' });
@@ -65,6 +67,13 @@ class FilesController {
     newFile = await dbClient.db.collection('files').insertOne({
       userId, name, type, parentId, isPublic, localPath: folderName,
     });
+
+    if (type === 'image') {
+      fileQueue.add({
+        userId: newFile.userId,
+        fileId: newFile.insertedId,
+      })
+    }
 
     return response.status(201).send({
       id: newFile.insertedId, userId, name, type, isPublic, parentId,
@@ -175,9 +184,11 @@ class FilesController {
 
   static async getFile(request, response) {
     const { id } = request.params;
+    const { size } = request.params;
+
     const file = await dbClient.db.collection('files').findOne({ _id: ObjectId(id) });
     if (!file) {
-      response.status(404).send({ error: 'Not found' });
+      return response.status(404).send({ error: 'Not found' });
     }
 
     if (file.isPublic === false) {
@@ -191,6 +202,14 @@ class FilesController {
     }
     const path = process.env.FOLDER_PATH || '/tmp/files_manager';
     if (!fs.existsSync(path)) {
+      return response.status(404).send({ error: 'Not Found' });
+    }
+
+    const possibleSize = [ 100, 250, 500];
+    if (size && !possibleSize.includes(size)) {
+      return response.status(404).send({ error: 'size must be 100, 250 or 500' });
+    }
+    if (!fs.existsSync(`${file.localPath}_${size}`)) {
       return response.status(404).send({ error: 'Not Found' });
     }
 
